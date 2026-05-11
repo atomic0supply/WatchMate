@@ -1,0 +1,13 @@
+# Firebase App Hosting backend config.
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 1
+  concurrency: 80
+
+# No client-side env vars are required.
+# The Gemini API key lives in Secret Manager and is consumed by
+# Cloud Functions (see functions/src/index.ts), not by this SPA.
+env: []
