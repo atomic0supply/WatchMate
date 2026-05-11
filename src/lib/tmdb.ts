@@ -52,8 +52,17 @@ export async function getSeriesDetails(id: string): Promise<{ seasons_count: num
   }
 }
 
+const NO_POSTER_SVG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 750" preserveAspectRatio="xMidYMid slice">
+      <rect width="500" height="750" fill="#18181b"/>
+      <text x="50%" y="50%" fill="#52525b" font-family="system-ui,sans-serif" font-size="34" font-weight="700" text-anchor="middle" dominant-baseline="middle">No poster</text>
+    </svg>`
+  );
+
 export function getPosterUrl(path: string | null | undefined, size: string = 'w500') {
-  if (!path) return 'https://via.placeholder.com/500x750?text=No+Poster';
+  if (!path) return NO_POSTER_SVG;
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
