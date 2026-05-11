@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null && (request.auth.token.get('email_verified', false) == true || request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'google.com');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // USER RULES
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['id', 'createdAt']) &&
+               data.id is string && data.id == userId &&
+               (data.get('name', '') is string) &&
+               (data.get('email', '') is string) &&
+               (data.get('tasteProfile', '') is string) &&
+               (data.get('homeViewMode', 'grid') in ['grid', 'swipe']);
+      }
+
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && 
+                    (incoming().get('createdAt', null) == request.time || incoming().createdAt is string || incoming().createdAt is timestamp);
+      allow update: if isOwner(userId) && isValidUser(incoming()) &&
+                    incoming().id == existing().id &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'tasteProfile', 'email', 'homeViewMode']);
+    }
+
+    // CONTENT RULES
+    match /users/{userId}/content/{contentId} {
+      function isValidContent(data) {
+        return data.keys().hasAll(['userId', 'title', 'type', 'status', 'createdAt']) &&
+               data.userId == userId &&
+               data.title is string && data.title.size() > 0 && data.title.size() <= 500 &&
+               data.type in ['movie', 'series'] &&
+               data.status in ['watched', 'to_watch', 'not_interested'] &&
+               (data.get('rating', 0) is number && data.get('rating', 0) >= 0 && data.get('rating', 0) <= 5) &&
+               (data.get('year', '') is string) &&
+               (data.get('genres', []) is list) &&
+               (data.get('aiNotes', '') is string) &&
+               (data.get('posterPath', null) == null || data.posterPath is string) &&
+               (data.get('tmdbId', null) == null || data.tmdbId is string) &&
+               (data.get('styleLiked', 'neutral') in ['yes', 'neutral', 'no']) &&
+               (data.get('seasonsCount', null) == null || data.seasonsCount is int) &&
+               (data.get('watchedSeasons', null) == null || data.watchedSeasons is list);
+      }
+
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidContent(incoming()) && 
+                    (incoming().get('createdAt', null) == request.time || incoming().createdAt is string || incoming().createdAt is timestamp);
+      allow update: if isOwner(userId) && isValidContent(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().diff(existing()).affectedKeys().hasAny(['title', 'type', 'year', 'genres', 'rating', 'styleLiked', 'status', 'aiNotes', 'posterPath', 'tmdbId', 'seasonsCount', 'watchedSeasons']);
+      allow delete: if isOwner(userId);
+    }
+
+    // RECOMMENDATIONS RULES
+    match /users/{userId}/recommendations/{recId} {
+      function isValidRec(data) {
+        return data.keys().hasAll(['userId', 'title', 'type', 'reason', 'status', 'createdAt']) &&
+               data.userId == userId &&
+               data.title is string &&
+               data.type in ['movie', 'series'] &&
+               data.status in ['suggested', 'to_watch', 'watched', 'dismissed'] &&
+               (data.get('matchScore', 0) is number) &&
+               (data.get('posterPath', null) == null || data.posterPath is string) &&
+               (data.get('tmdbId', null) == null || data.tmdbId is string) &&
+               (data.get('seasonsCount', null) == null || data.seasonsCount is int);
+      }
+
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidRec(incoming()) && 
+                    (incoming().get('createdAt', null) == request.time || incoming().createdAt is string || incoming().createdAt is timestamp);
+      allow update: if isOwner(userId) && isValidRec(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

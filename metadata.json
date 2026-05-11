@@ -1,0 +1,6 @@
+{
+  "name": "WatchMate",
+  "description": "Una app PWA privada y simple para guardar lo que has visto, puntuar contenido y recibir recomendaciones inteligentes basadas en tu estilo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

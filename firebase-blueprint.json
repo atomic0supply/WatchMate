@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with taste summary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "tasteProfile": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "createdAt"]
+    },
+    "Content": {
+      "title": "Content",
+      "description": "Watched or to-watch movie/series item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["movie", "series"] },
+        "year": { "type": "string" },
+        "genres": { "type": "array" },
+        "rating": { "type": "integer", "description": "1-5 stars" },
+        "styleLiked": { "type": "string", "enum": ["yes", "neutral", "no"] },
+        "status": { "type": "string", "enum": ["watched", "to_watch", "not_interested"] },
+        "aiNotes": { "type": "string" },
+        "posterPath": { "type": "string" },
+        "tmdbId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "type", "status", "createdAt"]
+    },
+    "Recommendation": {
+      "title": "Recommendation",
+      "description": "AI generated recommendation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["movie", "series"] },
+        "year": { "type": "string" },
+        "reason": { "type": "string" },
+        "matchScore": { "type": "integer" },
+        "status": { "type": "string", "enum": ["suggested", "to_watch", "watched", "dismissed"] },
+        "posterPath": { "type": "string" },
+        "tmdbId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "type", "reason", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles"
+    },
+    "users/{userId}/content/{contentId}": {
+      "schema": "Content",
+      "description": "Contents viewed or pending for a user"
+    },
+    "users/{userId}/recommendations/{recId}": {
+      "schema": "Recommendation",
+      "description": "Personalized AI recommendations"
+    }
+  }
+}
